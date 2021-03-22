@@ -2,27 +2,33 @@ import pygrib
 import logging
 import numpy as np
 from datetime import datetime, timedelta
-
-# output paremeter defs...
-TYPE_OF_LEVEL=105
-LEVEL=0
-SNOW_COVER_AGE_PARAMETER=145
-DRIFT_ACCUMULATION_PARAMETER=146
-MOBILITY_INDEX_PARAMETER=147
-SNOW_DRIFT_VALUE_PARAMETER=148
+from more_itertools import sort_together
 
 # default data collection config...
 config = {
-    'snow_ac': 'heightAboveGround:0:184',
-    'snow': 'heightAboveGround:0:64',
-    'surface-temp': 'heightAboveGround:0:11',
-    'wind-u': 'heightAboveGround:10:33',
-    'wind-v': 'heightAboveGround:10:34',
+    'snow-ac': {
+        'id': 'heightAboveGround:0:184',
+        # override unit if not provided...
+        'unit': 'mm'
+    },
+    'snow': {
+        'id': 'heightAboveGround:0:64'
+    },
+    'temp': {
+        #'id': 'heightAboveGround:0:11',
+        'id': 'heightAboveGround:2:11'
+    },
+    'wind-u': {
+        'id': 'heightAboveGround:10:33'
+    },
+    'wind-v': {
+        'id': 'heightAboveGround:10:34'
+    }
 }
 
 def collectData(files, config=config):
     # reverse mapping of config dict for convenience,
-    id2Par = {v: k for k, v in config.items()}
+    id2Par = {v['id']: k for k, v in config.items()}
 
     # create data holder,
     data = {}
@@ -43,6 +49,7 @@ def collectData(files, config=config):
             toLevel = g['typeOfLevel']
             level = g['level']
             ioPar = g['indicatorOfParameter']
+            unit = g['units']
             # construct string unique identity
             id = "%s:%d:%d"%(toLevel, level, ioPar)
 
@@ -52,13 +59,24 @@ def collectData(files, config=config):
                 par = id2Par[id]
                 if par not in data:
                     logging.info(" - found %r"%par)
-                    data[par] = {'times': [], 'values':[]}
+                    # check if input config overrides unit
+                    if config[par].get('unit'):
+                        unit = config[par].get('unit')
+                        logging.info("   - overriding unit as %r"%unit)
+                    # create data entry for this par...
+                    data[par] = {'times': [], 'values':[], 'unit': unit}
+
                 # pick out data...
                 vals = g.values.astype(np.float32)
 
                 # convert any masked array data...
                 if hasattr(vals, 'mask'):
                     vals = np.ma.getdata(vals)
+
+                # convert units if necessary,
+                if unit == 'K':
+                    vals -= 273.15
+                    data[par]['unit'] = u'°C'
 
                 # calculate step valid time...
                 t = g.validDate
@@ -82,6 +100,12 @@ def collectData(files, config=config):
     # sort time steps,
     # data should be returned in correct order
     logging.info('time sorting loaded parameters')
+    for par in data:
+        times = data[par]['times']
+        values = data[par]['values']
+        res = sort_together((times, values))
+        data[par]['times'] = res[0]
+        data[par]['values'] = res[1]
 
     # load data summary
     summary(data)
@@ -109,15 +133,42 @@ def collectData(files, config=config):
                 raise IOError("time steps dont match across all input data")
     logging.info(" - OK")
 
+    return data
 
 def summary(data):
-    print("Data summary:")
+    print("-----------------------------------")
+    print("Input data summary:")
+    print("-----------------------------------")
+    mm = minmax(data)
     for k in data:
         print("  %s:"%k)
         times = data[k]['times']
         values = data[k]['values']
-        print("    steps: %d"%len(times))
-        print("    start/stop: %s/%s"%(times[0],times[-1]))
+        unit = data[k]['unit']
+        mi = mm[k]['min']
+        ma = mm[k]['max']
+        print("    steps:       %d"%len(times))
+        print("    min/max:     %.1f/%.1f %s"%(mi,ma,unit))
+        print("    start/stop:  %s/%s"%(times[0],times[-1]))
+    print("-----------------------------------")
+
+def minmax(data):
+    mm = {}
+    for k in data:
+        vs = data[k]['values']
+        if k not in mm:
+            mm[k] = {'min': vs[0].min(), 'max': vs[0].max()}
+        mi = mm[k]['min']
+        ma = mm[k]['max']
+        for v in vs:
+            tma = v.max()
+            tmi = v.min()
+            if tma > ma:
+                mm[k]['max'] = tma
+            if tmi < mi:
+                mm[k]['min'] = tmi
+    return mm
+
 
 
 

@@ -15,5 +15,9 @@ args = parser.parse_args()
 # Target forecast dataset...
 files = args.forecast_files
 
-snowdrift.collectData(files)
+# Load input fc parameter data,
+#  - pass input data config here
+inputData = snowdrift.collectData(files)
 
+# Run snowdrift calculation on dataset,
+data = snowdrift.snowdrift(inputData)
