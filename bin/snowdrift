@@ -1,0 +1,19 @@
+#! /usr/bin/python3
+
+import argparse
+import logging
+import sys
+import snowdrift
+logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
+
+# Setup and parse program arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('forecast_files', nargs='+')
+parser.add_argument('--dev', help="enables dev logging", action='store_true')
+args = parser.parse_args()
+
+# Target forecast dataset...
+files = args.forecast_files
+
+snowdrift.collectData(files)
+
