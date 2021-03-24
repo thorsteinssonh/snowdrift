@@ -21,3 +21,6 @@ inputData = snowdrift.collectData(files)
 
 # Run snowdrift calculation on dataset,
 data = snowdrift.snowdrift(inputData)
+
+# Test plot the results...
+snowdrift.plot(data)

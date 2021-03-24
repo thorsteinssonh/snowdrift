@@ -6,14 +6,22 @@ from more_itertools import sort_together
 
 # default data collection config...
 config = {
-    'snow-ac': {
+    'snowac': {
         'id': 'heightAboveGround:0:184',
         # override unit if not provided...
-        'unit': 'mm'
+        'unit': 'kg m**-2'
     },
     'snow': {
         'id': 'heightAboveGround:0:64'
     },
+    # snow on ground could be used... so collecting it,
+    # if available, but unclear yet how to use
+    # in the drift model, as originally implemented.
+    'snowground': {
+        'id': 'heightAboveGround:0:65'
+    },
+    # temp should ideally be surface temperature
+    # if model has it
     'temp': {
         #'id': 'heightAboveGround:0:11',
         'id': 'heightAboveGround:2:11'
@@ -110,8 +118,14 @@ def collectData(files, config=config):
     # load data summary
     summary(data)
 
+    # consistency checks on input data,
+    check_consistency(data)
+
+    return data
+
+def check_consistency(data):
     # Consistency checks, e.g. no. steps and time stamps
-    logging.info('preforming final consistency checks')
+    logging.info('preforming data consistency checks')
     # check that all params and times are equivalent...
     allTimes = [data[x]['times'] for x in data]
     allN = [len(ts) for ts in allTimes]
@@ -133,29 +147,35 @@ def collectData(files, config=config):
                 raise IOError("time steps dont match across all input data")
     logging.info(" - OK")
 
-    return data
 
 def summary(data):
     print("-----------------------------------")
-    print("Input data summary:")
+    print("data summary:")
     print("-----------------------------------")
     mm = minmax(data)
     for k in data:
         print("  %s:"%k)
         times = data[k]['times']
+        n = len(times)
         values = data[k]['values']
         unit = data[k]['unit']
         mi = mm[k]['min']
         ma = mm[k]['max']
-        print("    steps:       %d"%len(times))
-        print("    min/max:     %.1f/%.1f %s"%(mi,ma,unit))
-        print("    start/stop:  %s/%s"%(times[0],times[-1]))
+        if n == 0:
+            print("    NO DATA")
+        else:
+            print("    steps:       %d"%n)
+            print("    min/max:     %.1f/%.1f %s"%(mi,ma,unit))
+            print("    start/stop:  %s/%s"%(times[0],times[-1]))
     print("-----------------------------------")
 
 def minmax(data):
     mm = {}
     for k in data:
         vs = data[k]['values']
+        # if empty...
+        if len(vs) == 0:
+            mm[k] = {'min': np.nan, 'max': np.nan}
         if k not in mm:
             mm[k] = {'min': vs[0].min(), 'max': vs[0].max()}
         mi = mm[k]['min']
