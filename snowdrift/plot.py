@@ -11,7 +11,12 @@ def parseScaleDef(sdef):
         d.append((c[0], fCol))
     return d
 
-ageScale = (
+defaultScale = (
+    (0,'black'),
+    (1,'white')
+)
+
+snowageScale = (
     (-1,'white'),
     (0, '#c0c0c0'),
     (1,'#808080'),
@@ -24,15 +29,55 @@ ageScale = (
     (128,'#808'),
 )
 
-ageCM = Colormap(*parseScaleDef(ageScale))
+driftaccScale = (
+    (0,'white'),
+    (0.5, '#808080'),
+    (1, '#0cf'),
+    (2, '#0ff'),
+    (4, '#0f0'),
+    (8, '#ff0'),
+    (12, '#fc0'),
+    (24, '#f0f')
+)
+
+mobilityScale = (
+    (0,'white'),
+    (0.3, '#dd0'),
+    (0.6, '#00be80'),
+    (1, '#0000d0'),
+)
+
+driftScale = (
+    (0,'#0d0'),
+    (0.09, '#0dd'),
+    (0.2, '#dd0'),
+    (0.5, '#d00'),
+)
+
+def getCM(param, vals):
+    if param == 'snowage':
+        return Colormap(*parseScaleDef(snowageScale))
+    elif param == 'driftacc':
+        return Colormap(*parseScaleDef(driftaccScale))
+    elif param == 'mobility':
+        return Colormap(*parseScaleDef(mobilityScale))
+    elif param == 'drift':
+        return Colormap(*parseScaleDef(driftScale))
+    else:
+        cm = Colormap(*parseScaleDef(defaultScale))
+        cm.set_range(vals.min(), vals.max())
+        return cm
 
 
 # Test plotter...
-def plot(data):
-    if 'snowage' in data:
-        # plot snow age...
-        vals = data['snowage']['values'][-1]
+def plot(data, i, param):
 
-        img = TImage(vals, mode="L")
-        img.palettize(ageCM)
-        img.show()
+    # plot snow age...
+    vals = data[param]['values'][i][::-1,:]
+
+    img = TImage(vals, mode="L")
+
+    cm = getCM(param, vals)
+    img.palettize(cm)
+    #img.colorize(cm)
+    img.show()

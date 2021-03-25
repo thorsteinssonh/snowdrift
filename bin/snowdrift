@@ -23,4 +23,7 @@ inputData = snowdrift.collectData(files)
 data = snowdrift.snowdrift(inputData)
 
 # Test plot the results...
-snowdrift.plot(data)
+snowdrift.plot(data, -1, 'snowage')
+snowdrift.plot(data, -1, 'driftacc')
+snowdrift.plot(data, -1, 'mobility')
+snowdrift.plot(data, -1, 'drift')

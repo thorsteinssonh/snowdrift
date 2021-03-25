@@ -11,12 +11,8 @@ config = {
         # override unit if not provided...
         'unit': 'kg m**-2'
     },
-    'snow': {
-        'id': 'heightAboveGround:0:64'
-    },
-    # snow on ground could be used... so collecting it,
-    # if available, but unclear yet how to use
-    # in the drift model, as originally implemented.
+    # Snow on ground, keeps track of snow covered
+    # and snow free areas.
     'snowground': {
         'id': 'heightAboveGround:0:65'
     },
