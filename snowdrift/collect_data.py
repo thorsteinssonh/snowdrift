@@ -19,8 +19,8 @@ config = {
     # temp should ideally be surface temperature
     # if model has it
     'temp': {
-        #'id': 'heightAboveGround:0:11',
-        'id': 'heightAboveGround:2:11'
+        'id': 'heightAboveGround:0:11',
+        #'id': 'heightAboveGround:2:11'
     },
     'wind-u': {
         'id': 'heightAboveGround:10:33'
@@ -118,6 +118,39 @@ def collectData(files, config=config):
     check_consistency(data)
 
     return data
+
+# collect a single appropriate msg from grib forecast,
+# for later use as template in writing snow drift results 
+def get_template_msg(file):
+    # reverse mapping of config dict for convenience,
+    id2Par = {v['id']: k for k, v in config.items()}
+
+    try:
+        G = pygrib.open(f)
+    except OSError as e:
+        logging.error("failed to open file %r"%f)
+        raise e
+
+    logging.info("collecting from %r"%f)
+
+    # scan for data
+    for g in G:
+        # read the msg identifiers
+        toLevel = g['typeOfLevel']
+        level = g['level']
+        ioPar = g['indicatorOfParameter']
+        unit = g['units']
+        # construct string unique identity
+        id = "%s:%d:%d"%(toLevel, level, ioPar)
+
+        # check against config,
+        if id in id2Par:
+            # collect this data,
+            pass
+
+    # if here failed to find template msg
+    G.close()
+    raise IOError("could not find a template msg in %r"%file)
 
 def check_consistency(data):
     # Consistency checks, e.g. no. steps and time stamps

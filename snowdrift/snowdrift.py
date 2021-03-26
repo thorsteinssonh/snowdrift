@@ -1,14 +1,7 @@
 import logging
 from .collect_data import summary, check_consistency
 
-# output paremeter defs...
-TYPE_OF_LEVEL=105
-LEVEL=0
-SNOW_COVER_AGE_PARAMETER=145
-DRIFT_ACCUMULATION_PARAMETER=146
-MOBILITY_INDEX_PARAMETER=147
-SNOW_DRIFT_VALUE_PARAMETER=148
-
+# Default model thresholds
 SNOW_COVER_LIMIT=1.0
 SNOW_FALL_LIMIT=0.1
 
