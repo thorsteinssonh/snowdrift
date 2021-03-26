@@ -48,6 +48,7 @@ mobilityScale = (
 )
 
 driftScale = (
+    (-1,'white'),
     (0,'#0d0'),
     (0.09, '#0dd'),
     (0.2, '#dd0'),
@@ -69,8 +70,9 @@ def getCM(param, vals):
         return cm
 
 
-# Test plotter...
-def plot(data, i, param):
+# Test plotter, plots and shows parameter at step i
+# If save is provided, save to file instead
+def plot(data, i, param, save=None):
 
     # plot snow age...
     vals = data[param]['values'][i][::-1,:]
@@ -80,4 +82,9 @@ def plot(data, i, param):
     cm = getCM(param, vals)
     img.palettize(cm)
     #img.colorize(cm)
-    img.show()
+
+    if save:
+        filename = "%s_%s_%03d.png"%(save, param, i)
+        img.pil_save(filename)
+    else:
+        img.show()

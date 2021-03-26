@@ -9,7 +9,9 @@ logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=loggin
 # Setup and parse program arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('forecast_files', nargs='+')
-parser.add_argument('--dev', help="enables dev logging", action='store_true')
+parser.add_argument('--out', metavar='FILENAME', help="save result to file(s)", default=None)
+parser.add_argument('--format', help="output format ['GRIB' (default) | 'PNG']", default="GRIB")
+parser.add_argument('--show', metavar='STEP', help="show snow drift result at STEP [-1 (default / last step)]", default=None)
 args = parser.parse_args()
 
 # Target forecast dataset...
@@ -22,8 +24,25 @@ inputData = snowdrift.collectData(files)
 # Run snowdrift calculation on dataset,
 data = snowdrift.snowdrift(inputData)
 
-# Test plot the results...
-snowdrift.plot(data, -1, 'snowage')
-snowdrift.plot(data, -1, 'driftacc')
-snowdrift.plot(data, -1, 'mobility')
-snowdrift.plot(data, -1, 'drift')
+# save,
+if args.out:
+    filen = args.out
+    # save as images...
+    if args.format.lower() == 'png':
+        n = len(data['drift']['times'])
+        for step in range(n):
+            snowdrift.plot(data, step, 'snowage', save=filen)
+            snowdrift.plot(data, step, 'driftacc', save=filen)
+            snowdrift.plot(data, step, 'mobility', save=filen)
+            snowdrift.plot(data, step, 'drift', save=filen)
+    elif args.format.lower() == 'grib':
+        print('GRIB output not yet implemented')
+        sys.exit()
+
+# Test plot the results at step
+if args.show:
+    step = int(args.show)
+    snowdrift.plot(data, step, 'snowage')
+    snowdrift.plot(data, step, 'driftacc')
+    snowdrift.plot(data, step, 'mobility')
+    snowdrift.plot(data, step, 'drift')

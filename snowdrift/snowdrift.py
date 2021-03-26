@@ -12,23 +12,6 @@ SNOW_DRIFT_VALUE_PARAMETER=148
 SNOW_COVER_LIMIT=1.0
 SNOW_FALL_LIMIT=0.1
 
-#    echo "-----------------------------------------------"
-#    echo "Calculation time step ${i} :"
-#    make_wind_speed $i
-#    make_snow $i
-#    make_is_snow_covered $i
-#    make_is_new_snow $i
-#    make_is_melting_temp $i
-
-#    echo "SA:#########################################################"
-#    make_snow_cover_age $i
-#    echo "DA:#########################################################"
-#    make_drift_accumulation $i
-#    echo "MI:#########################################################"
-#    make_mobility_index $i
-#    echo "SDV:########################################################"
-#    make_snow_drift_value $i
-
 
 # the main snow drift algorithm on loaded data
 def snowdrift(data):
@@ -41,7 +24,7 @@ def snowdrift(data):
     # because SA,DA,MI and SDV are interdependent calculations,
     logging.info("snow drift algorithm")
     for i in range(nsteps(data)):
-        print("Drift calc %d"%i)
+        logging.info("Drift calculation step %d"%i)
         calculate_snow_cover_age(data, i)
         calculate_drift_accumulation(data, i)
         calculate_mobility_index(data, i)
@@ -87,6 +70,11 @@ def calculate_drift(data, i):
     # set to zero if wind < 6.0
     d[wind<6.0] = 0.0
 
+    # set snow free areas to -1
+    # mainly just for better plotting
+    isc = is_snow_covered(data, i)
+    d[~isc] = -1
+
     # append
     drift.append(d)
     drifttimes.append(t)
@@ -112,7 +100,7 @@ def calculate_mobility_index(data, i):
         mobility.append(mi)
         mobilitytimes.append(times[0])
     else:
-        mi = mobility[i-1][:] # make copy of prev step
+        mi = mobility[i-1].copy() # make copy of prev step
 
         # if new snow, reset mobility to 1.0
         new = is_new_snow(data, i)
@@ -166,7 +154,7 @@ def calculate_drift_accumulation(data, i):
         pDrift = data['drift']['values'][i-1]
         pDacc = data['driftacc']['values'][i-1]
         # accumulate drift with wind > 6.0
-        dacc = pDacc[:] # copy from previous
+        dacc = pDacc.copy() # copy from previous
         windy = pWind > 6.0
         dacc[windy] = pDacc[windy] + pDrift[windy]
         # reset accumulation when new snow,
