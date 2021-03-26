@@ -117,23 +117,24 @@ def collectData(files, config=config):
     # consistency checks on input data,
     check_consistency(data)
 
-    return data
+    # collect a template message for later use
+    # in writing results
+    templateMsg = get_template_msg(files[0])
+
+    return data, templateMsg
 
 # collect a single appropriate msg from grib forecast,
 # for later use as template in writing snow drift results 
 def get_template_msg(file):
-    # reverse mapping of config dict for convenience,
-    id2Par = {v['id']: k for k, v in config.items()}
+    logging.info("collecting template msg from %r"%file)
 
     try:
-        G = pygrib.open(f)
+        G = pygrib.open(file)
     except OSError as e:
-        logging.error("failed to open file %r"%f)
+        logging.error("failed to open file %r"%file)
         raise e
 
-    logging.info("collecting from %r"%f)
-
-    # scan for data
+    # scan for appropriate msg
     for g in G:
         # read the msg identifiers
         toLevel = g['typeOfLevel']
@@ -143,10 +144,11 @@ def get_template_msg(file):
         # construct string unique identity
         id = "%s:%d:%d"%(toLevel, level, ioPar)
 
-        # check against config,
-        if id in id2Par:
-            # collect this data,
-            pass
+        # check against config, 
+        # use first temp msg as template
+        if id == config['temp']['id']:
+            G.close()
+            return g
 
     # if here failed to find template msg
     G.close()

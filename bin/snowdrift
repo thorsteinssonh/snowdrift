@@ -19,7 +19,7 @@ files = args.forecast_files
 
 # Load input fc parameter data,
 #  - pass input data config here
-inputData = snowdrift.collectData(files)
+inputData, templateMsg = snowdrift.collectData(files)
 
 # Run snowdrift calculation on dataset,
 data = snowdrift.snowdrift(inputData)
@@ -29,6 +29,7 @@ if args.out:
     filen = args.out
     # save as images...
     if args.format.lower() == 'png':
+        logging.info("writing PNG images to %r"%(filen+"*"))
         n = len(data['drift']['times'])
         for step in range(n):
             snowdrift.plot(data, step, 'snowage', save=filen)
@@ -36,8 +37,11 @@ if args.out:
             snowdrift.plot(data, step, 'mobility', save=filen)
             snowdrift.plot(data, step, 'drift', save=filen)
     elif args.format.lower() == 'grib':
-        print('GRIB output not yet implemented')
-        sys.exit()
+        logging.info("writing snowdrift parameters to GRIB %r"%(filen+"*"))
+        snowdrift.save_grib(data, filen, templateMsg)
+    else:
+        logging.error("unknown output format %r"%args.format)
+        sys.exit(1)
 
 # Test plot the results at step
 if args.show:
